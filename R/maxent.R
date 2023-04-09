@@ -20,8 +20,20 @@ setClass("MaxEnt_model",
 	),
 )
 
-if (!isGeneric("MaxEnt")) { setGeneric("MaxEnt", function(x, p, ...) standardGeneric("MaxEnt"))
-}	
+
+setClass("MaxEnt_model_replicates",
+	representation (
+		models  = "list",
+		results = "matrix",
+		html = "character"
+	),	
+	prototype (	
+		models = list(),
+		results = as.matrix(NA),
+		html = ""
+	),
+)
+
 
 .getMeVersion <- function(...) {}
 
@@ -193,7 +205,7 @@ setMethod("MaxEnt", signature(x="data.frame", p="numeric"),
 		#}
 		
 		if (!missing(path)) {
-			path <- trim(path)
+			path <- trimws(path)
 			dir.create(path, recursive=TRUE, showWarnings=FALSE)
 			if (!file.exists(path)) {
 				stop("cannot create output directory: ", path)
@@ -243,7 +255,7 @@ setMethod("MaxEnt", signature(x="data.frame", p="numeric"),
 	
 		if (replicates > 1) {
 		
-			mer <- new("MaxEntReplicates")
+			mer <- new("MaxEnt_model_replicates")
 			d <- t(utils::read.csv(paste(dirout, "/maxentResults.csv", sep="") ))
 			d1 <- d[1,]
 			d <- d[-1, ,drop=FALSE]
@@ -346,7 +358,7 @@ setMethod("predict", signature(object="MaxEnt_model_replicates"),
 
 		n <- length(object@models)
 		if (filename != "") {
-			filename <- trim(filename)
+			filename <- trimws(filename)
 			fxt <- tools::file_ext(filename)
 			filename <- tools::file_path_sans_ext(filename)
 			fname <- paste(filename, "_", 1:n, fxt, sep="")
@@ -443,27 +455,6 @@ setMethod("predict", signature(object="MaxEnt_model"),
 		return(out)
 	}
 )
-
-
-
-
-
-
-
-setClass("MaxEnt_model_replicates",
-	representation (
-		models  = "list",
-		results = "matrix",
-		html = "character"
-	),	
-	prototype (	
-		models = list(),
-		results = as.matrix(NA),
-		html = ""
-	),
-)
-
-
 		
 		
 
