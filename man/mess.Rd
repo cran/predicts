@@ -17,7 +17,7 @@
 \arguments{
   \item{x}{SpatRaster or data.frame}
   \item{v}{matrix or data.frame containing the reference values; each column should correspond to one layer of the SpatRaster object. If \code{x} is a SpatRaster, it can also be a SpatVector with reference locations (points)}
-  \item{full}{logical. If \code{FALSE} a SpatRaster with the MESS values is returned. If \code{TRUE}, a RasterBrick is returned with \code{n} layers corresponding to the layers of the input SpatRaster and an additional layer with the MESS values}
+  \item{full}{logical. If \code{FALSE} a SpatRaster with the MESS values is returned. If \code{TRUE}, a SpatRaster is returned with \code{n} layers corresponding to the layers of the input SpatRaster and an additional layer with the MESS values}
   \item{filename}{character. Output filename (optional)}
   \item{...}{additional arguments as for \code{\link{writeRaster}}}
 }
@@ -31,11 +31,11 @@ SpatRaster (or data.frame) with layers (columns) corresponding to the input laye
 }
 
 \references{
-Elith J., M. Kearney M., and S. Phillips, 2010. The art of modelling range-shifting species. \doi{10.1111/j.2041-210X.2010.00036.x}{Methods in Ecology and Evolution 1:330-342}.
+Elith J., M. Kearney M., and S. Phillips, 2010. The art of modelling range-shifting species. Methods in Ecology and Evolution 1:330-342. \doi{10.1111/j.2041-210X.2010.00036.x}
 }
 
 \author{
-Jean-Pierre Rossi <jean-pierre.rossi@supagro.inra.fr>, Robert Hijmans, Paulo van Breugel
+Jean-Pierre Rossi, Robert Hijmans, Paulo van Breugel
 }
 
 
@@ -61,9 +61,12 @@ bradypus <- bradypus[,2:3]
 
 predfile <- paste0(system.file(package="predicts"), "/ex/bio.tif")
 predictors <- rast(predfile)
-reference_points <- extract(predictors, bradypus)
+reference_points <- extract(predictors, bradypus, ID=FALSE)
 mss <- mess(x=predictors, v=reference_points, full=TRUE)
-plot(mss)
+
+breaks <- c(-500, -50, -25, -5, 0, 5, 25, 50, 100)
+fcol <- colorRampPalette(c("blue", "beige", "red"))
+plot(mss[[10]], breaks=breaks, col=fcol(9), plg=list(x="bottomleft"))
 }
 
 }

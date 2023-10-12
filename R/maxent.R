@@ -4,9 +4,8 @@
 # Licence GPL v3
 
 setClass("MaxEnt_model",
+	contains = "SDM",
 	representation (
-		presence = "data.frame",
-		absence = "data.frame",
 		lambdas  = "vector",
 		results = "matrix",
 		path = "character",
@@ -443,7 +442,7 @@ setMethod("predict", signature(object="MaxEnt_model"),
 		out <- terra::rast(x, nlyr=1)
 		names(out)  <- "maxent"
 		ncols <- terra::ncol(out)
-		if (!terra::readStart(x)) { stop(x@ptr$messages$getError()) }
+		terra::readStart(x)
 		on.exit(terra::readStop(x))
 		b <- terra::writeStart(out, filename, ...)
 		for (i in 1:b$n) {
