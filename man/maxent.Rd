@@ -32,7 +32,7 @@ This function uses the MaxEnt species distribution model software by Phillips, D
 }
 
 \arguments{
-\item{x}{Predictors. Either a SpatRaster to extract values from for the locations in \code{y}; or a data.frame, in which case each column should be a predictor variable and each row a presence or background record}
+\item{x}{Predictors. Either a SpatRaster to extract values from for the locations in \code{y}; or a data.frame, in which case each column should be a predictor variable and each row a presence or background record. Either can include categorical variables (see \code{\link{as.factor}})}
 
 \item{p}{If \code{x} is a SpatRaster: occurence data. This can be a data.frame, matrix, or SpatVector. If \code{p} is a data.frame or matrix it represents a set of point locations; and it must have two columns with the first being the x-coordinate (longitude) and the second the y-coordinate (latitude). 
 
@@ -53,6 +53,7 @@ If \code{x} is a data.frame, \code{p} should be a vector with a length equal to 
 
 \item{...}{Additional arguments}
 }
+
 
 
 \value{
@@ -80,16 +81,13 @@ Jane Elith, Steven J. Phillips, Trevor Hastie, Miroslav Dudik, Yung En Chee, Col
 
 \examples{
 
-\donttest{
-
-# test if you can use MaxEnt 
+# test the MaxEnt version 
 MaxEnt()
 
-if (MaxEnt()) {
-
+\donttest{
 # get predictor variables
-f <- system.file("ex/bio.tif", package="predicts")
-preds <- rast(f)
+ff <- list.files("tif$", path=system.file("ex", package="predicts"), full.names=TRUE)
+preds <- rast(ff)
 plot(preds)
 
 # file with presence points
@@ -108,13 +106,10 @@ me <- MaxEnt(preds, occtrain)
 me
 
 # use "args"
-me2 <- MaxEnt(preds, occtrain, factors='biome', args=c("-J", "-P"))
+me2 <- MaxEnt(preds, occtrain, args=c("-J", "-P"))
 
 # plot showing importance of each variable
 plot(me)
-
-# response curves
-# response(me)
 
 # predict to entire dataset
 r <- predict(me, preds) 
@@ -153,7 +148,6 @@ plot(e3, 'ROC')
 }
 }
 
-}
 
 \keyword{spatial}
 

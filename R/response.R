@@ -4,7 +4,9 @@
 
 .get_model_data <- function(m) {
 	if (inherits(m, "lm") || inherits(m, "glm")) {
-		m$model
+		rvar <- as.character(attributes(m$terms)$variables[[2]])
+		m <- m$model
+		m[, !(names(m) %in% rvar), drop=FALSE]
 	} else if (inherits(m, "SDM")) {
 		rbind(m@presence, m@absence)
 	} else {
@@ -12,33 +14,110 @@
 	}
 }
 
-
-varImportance <- function(model, data, vars=colnames(data), n=10) {
-	RMSE <- matrix(nrow=n, ncol=length(vars))
-	colnames(RMSE) <- vars
-
-	if (missing(data)) {
-		data <- .get_model_data(model)
-		if (is.null(data)) {
-			stop("data argument cannot be missing when using this model type")
-		}
+.get_response_data <- function(m) {
+	if (inherits(m, "lm") || inherits(m, "glm")) {
+		rvar <- as.character(attributes(m$terms)$variables[[2]])
+		m$model[,rvar]
+	} else if (inherits(m, "SDM")) {
+		c(rep(1, nrow(m@presence)), rep(0, nrow(m@absence)))
+	} else {
+		NULL
 	}
-
-	P <- predict(model, data)
-	for (i in 1:length(vars)) {
-		rd <- data
-		v <- vars[i]
-		for (j in 1:n) {
-			rd[[v]] <- sample(rd[[v]])
-			p <- predict(model, rd)
-			RMSE[j,i] <- predicts::RMSE(P, p)
-		}
-	}
-	colMeans(RMSE) 
 }
 
 
-partialResponse <- function(model, data, var=1, rng=NULL, nsteps=25) {
+varImportance <- function(model, y, x, n=10, stat, value="relative", ...) {
+
+#	vars <- vars[vars %in% colnames(x)]
+#	if (length(vars) < 1) {
+#		stop("no valid names in vars")
+#	}
+	
+	value <- match.arg(tolower(value), c("absolute", "relative", "difference"))
+	
+	if (missing(x)) {
+		x <- .get_model_data(model)
+		if (is.null(x)) {
+			stop("data argument cannot be missing when using this model type")
+		}
+	}
+	vars <- colnames(x)
+	eva <- matrix(nrow=n, ncol=length(vars))
+	colnames(eva) <- vars
+
+	
+	if (missing(y)) {
+		y <- .get_response_data(model)
+		if (is.null(y)) {
+			message("computing response (y) from x")
+			y <- predict(model, x, ...)
+		}
+	}
+
+	P <- predict(model, x, ...)
+	if (is.factor(P)) {
+		if (missing(stat)) stat = "overall"
+		stopifnot(stat %in% c("overall", "kappa"))
+		efun <- function(y, x) {
+			tab <- table(x, y)
+			1 - cm_evaluate(tab, stat)
+		}
+	} else {
+		if (missing(stat)) stat = "RMSE"
+		stopifnot(stat %in% c("RMSE", "AUC", "cor"))
+		if (stat == "AUC") {
+			efun <- function(y, x) {
+				i <- y == 1
+				1 - pa_evaluate(x[i], x[!i])@stats$auc
+			}
+		} else if (stat == "cor"){
+			efun <- function(y, x) {
+				i <- y == 1
+				1 - pa_evaluate(x[i], x[!i])@stats$cor
+			}
+		} else {
+			efun <- predicts::RMSE
+		}
+	}
+
+	base <- efun(y, P)
+
+	for (i in 1:length(vars)) {
+		rd <- x
+		v <- vars[i]
+		for (j in 1:n) {
+			rd[[v]] <- sample(rd[[v]])
+			p <- predict(model, rd, ...)
+			eva[j,i] <- efun(y, p)
+		}
+	}
+	if (value == "relative") {
+		(colMeans(eva) - base) / base
+	} else if (value == "absolute") {
+		colMeans(eva)
+	} else { #"difference"
+		colMeans(eva) - base
+	}
+}
+
+
+.pnrnc <- function(nr, nc, nl) {
+	if (missing(nc)) {
+		nc <- ceiling(sqrt(nl))
+	} else {
+		nc <- max(1, min(nl, round(nc)))
+	}
+	if (missing(nr)) {
+		nr <- ceiling(nl / nc)
+	} else {
+		nr <- max(1, min(nl, round(nr)))
+		nc <- ceiling(nl / nr)
+	}
+	c(nr, nc)
+}
+
+
+partialResponse <- function(model, data, var=NULL, rng=NULL, nsteps=25, plot=TRUE, nr, nc, ...) {
 
 	if (missing(data)) {
 		data <- .get_model_data(model)
@@ -47,51 +126,73 @@ partialResponse <- function(model, data, var=1, rng=NULL, nsteps=25) {
 		}
 	}
 	
-	if (is.numeric(var)) {
-		stopifnot(var > 0 & var <= ncol(data))
+	if (is.null(var)) {
+		var <- names(data)
+	} else if (is.numeric(var)) {
+		var <- round(var)
+		stopifnot(all(var > 0 & var <= ncol(data)))
 		var <- names(data)[var]
 	} else {
 		stopifnot(all(var %in% names(data)))
 	}
 	
-	if (is.factor(data[[var]])) {
-		steps <- levels(data[[var]])
-	} else {
-		if (is.null(rng)) { 
-			rng <- range(data[[var]]) 
+	out <- lapply(var, function(v) {
+		if (is.factor(data[[v]])) {
+			steps <- levels(data[[v]])
+		} else {
+			if (is.null(rng)) { 
+				rng <- range(data[[v]]) 
+			}
+			increment <- (rng[2] - rng[1])/(nsteps-2)
+			steps <- seq(rng[1]-increment, rng[2]+increment, increment)
 		}
-		increment <- (rng[2] - rng[1])/(nsteps-2)
-		steps <- seq(rng[1]-increment, rng[2]+increment, increment)
+		res <- rep(NA, length(steps))
+		for (i in 1:length(steps)) {
+			d <- data
+			# to handle factors (#16)
+			d[d[[v]] != steps[i], v] <- steps[i]
+			p <- predict(model, d, ...)
+			res[i] <- mean(p)
+		}
+		x <- data.frame(steps, res)
+		names(x) <- c(v, "p")
+		x
+	})
+	names(out) <- var
+	if (plot) {
+		nrnc <- .pnrnc(nr, nc, length(var))
+		old.par <- graphics::par(no.readonly = TRUE)
+		on.exit(graphics::par(old.par))
+		graphics::par(mfrow=nrnc)
+		for (i in 1:length(out)) {
+			plot(out[[i]], type="l", las=1)
+		}
+		invisible(out)
+	} else {
+		out
 	}
-	res <- rep(NA, length(steps))
-	for (i in 1:length(steps)) {
-		data[[var]] <- steps[i]
-		p <- predict(model, data)
-		res[i] <- mean(p)
-	}
-	x <- data.frame(steps, res)
-	names(x) <- c(var, "p")
-	x
 }
 
 
-partialResponse2 <- function(model, data, var, var2, var2levels, rng=NULL, nsteps=25) {
-	if (is.factor(data[[var]])) {
-		steps <- levels(data[[var]])
+partialResponse2 <- function(model, data, var1, var2, var2levels, rng=NULL, nsteps=25, ...) {
+	if (is.factor(data[[var1]])) {
+		steps <- levels(data[[var1]])
 	} else {
 		if (is.null(rng)) { 
-			rng <- range(data[[var]]) 
+			rng <- range(data[[var1]]) 
 		}
 		increment <- (rng[2] - rng[1])/(nsteps-2)
 		steps <- seq(rng[1]-increment, rng[2]+increment, increment)
 	}
 	res <- rep(NA, length(steps))
-	out <- data.frame(var=steps)	
+	out <- data.frame(var1=steps)	
 	for (v in var2levels) {
 		data[[var2]] <- v
 		for (i in 1:length(steps)) {
-			data[[var]] <- steps[i]
-			p <- stats::predict(model, data)
+			# to handle factors (#16)
+			data[data[[var1]] != steps[i], var1] <- steps[i]
+			##data[[var1]] <- steps[i]
+			p <- stats::predict(model, data, ...)
 			res[i] <- mean(p)
 		}
 		out[[paste(var2, v, sep="_")]] <- res

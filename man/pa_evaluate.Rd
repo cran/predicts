@@ -17,7 +17,7 @@ pa_evaluate(p, a, model=NULL, x=NULL, tr, ...)
 }
  
 \arguments{
-  \item{p}{either (1) predictions for presence points  (\code{model} and \code{x} are not \code{NULL}); or (2) predictor values for presence points (\code{model} is not \code{NULL}, \code{x} is \code{NULL}; or locations for presence points (\code{model} and \code{x} are not \code{NULL})}   
+  \item{p}{either (1) predictions for presence points  (\code{model} is \code{NULL}); or (2) predictor values for presence points (\code{model} is not \code{NULL}, \code{x} is \code{NULL}; or locations for presence points (\code{model} and \code{x} are not \code{NULL})}   
   \item{a}{as above for absence or background points}
   \item{model}{A fitted model used to make predictions}
   \item{x}{SpatRaster used to extract predictor values from}
@@ -86,6 +86,10 @@ Fielding, A.H. and J.F. Bell, 1997. A review of methods for the assessment of pr
 
 Liu, C., M. White & G. Newell, 2011. Measuring and comparing the accuracy of species distribution models with presence-absence data. Ecography 34: 232-243.
 }
+
+
+\seealso{\code{\link{cm_evaluate}}}
+
 
 \examples{
 set.seed(0)
