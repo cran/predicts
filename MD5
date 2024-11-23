@@ -1,11 +1,11 @@
 d41d8cd98f00b204e9800998ecf8427e *ChangeLog
-dd84f0db3008a10a1b16fbc69fb736ef *DESCRIPTION
+282edf97575881a66bd8dbd52c5216bd *DESCRIPTION
 a829c62636b811dae11fb6f0e7d58411 *NAMESPACE
 a6833de78e7f78959df594223533ba2e *R/AAgenerics.R
 692e966199f69744f5ce74c7899a14f8 *R/SDM.R
 53faee4a5da850049a16ead8d6576b27 *R/background.R
 03eeecddf5f3bc71a236a860f2387134 *R/biovars.R
-6b968ba4fe33639a8fda703f1fa1ae50 *R/divpol.R
+bf6f31a2bb90ee45b4bb1cc2aa66a06c *R/divpol.R
 83d908b9c0b13e5b61a02d1b683c7a6b *R/envelope.R
 e63cac5f8eb7f121c33e6afaea385d46 *R/evaluate.R
 e8ba071b77b88bd6a821a741e0e5973f *R/hullModel.R
@@ -15,7 +15,7 @@ bbf24482a146da7e85ab7f74790e7119 *R/maxent.R
 2a1f837069378f0052fce2717ea80b71 *R/pwd_sample.R
 88a6e34be7a4aaf62da611092a53a34e *R/pycno.R
 b9ca9e8cea62b779d37d8c4e92128742 *R/response.R
-b54db8794555342c4feee5fe0b1b8f5b *build/partial.rdb
+1dda19015f0aa969acee990c150e3ac9 *build/partial.rdb
 dd1f975b3011ec82a0f613e6963666e2 *inst/ex/acaule.csv
 3f679423055340d1ba00cb6ced50d5e9 *inst/ex/acaule.rds
 294becb6f3e17a05b46aa7d44af1ccfa *inst/ex/bio.tif
@@ -34,7 +34,7 @@ adef9023dab1c990614ae0d6cf09cb81 *inst/ex/bradypus.csv
 dcf33e0e39076c995bf2429dab311631 *man/envelope.Rd
 459a98f1dfca43fc742b4956bd039b2c *man/folds.Rd
 18ce1f80aa17b6d905112d10a3a901c7 *man/hullModel.Rd
-5cb3d563da20dd321508499f2de3a490 *man/maxent.Rd
+24b9312d9f7b8fd6cbfc623818314915 *man/maxent.Rd
 7da332a701d28ea324f44fa65ab27c8d *man/mess.Rd
 7ed318fdcf91b12bdc7697e4b0100318 *man/pa_evaluate.Rd
 ba508880ff2087037bb93c3698b14a2b *man/plot.Rd
